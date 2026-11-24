@@ -1,0 +1,4247 @@
+// Allergies page
+
+import 'package:flutter/material.dart';
+
+import '../models.dart';
+import 'goal_page.dart';
+
+const _green = Color(0xFF138A3E);
+
+class AllergiesPage extends StatefulWidget {
+  final OnboardingData data;
+  const AllergiesPage({super.key, required this.data});
+  @override
+  State<AllergiesPage> createState() => _AllergiesPageState();
+}
+
+class _AllergiesPageState extends State<AllergiesPage> {
+  String query = '';
+  OnboardingData get d => widget.data;
+
+  bool get hasHighAlert =>
+      allergens.any((a) => a.highAlert && d.allergies.contains(a.name));
+
+  void toggle(String name) => setState(() {
+    d.allergies.contains(name)
+        ? d.allergies.remove(name)
+        : d.allergies.add(name);
+    d.noAllergies = false;
+  });
+
+  void toggleNone() => setState(() {
+    d.noAllergies = !d.noAllergies;
+    if (d.noAllergies) d.allergies.clear();
+  });
+
+  Widget _card({
+    required Widget child,
+    bool selected = false,
+    VoidCallback? onTap,
+  }) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFFEAF8EE) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: selected ? _green : Colors.grey.shade300,
+          width: selected ? 1.5 : 1,
+        ),
+      ),
+      child: child,
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final list = allergens
+        .where((a) => a.name.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F6FD),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+              child: Row(
+                children: [
+                  const IconButton(
+                    icon: Icon(Icons.arrow_back),
+                    onPressed: null,
+                  ),
+                  Expanded(
+                    child: Row(
+                      children: List.generate(
+                        4,
+                        (i) => Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            decoration: BoxDecoration(
+                              color: i < 1 ? _green : Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('1 / 4', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            // Body
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Any food allergies or intolerances?',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'NutriLens AI will instantly flag unsafe ingredients during camera scanning.',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      onChanged: (v) => setState(() => query = v),
+                      decoration: InputDecoration(
+                        hintText: 'Search allergens (e.g. peanuts, gluten...)',
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Common Allergens',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          '${d.allergies.length} Selected',
+                          style: const TextStyle(
+                            color: _green,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 0.95,
+                      children: [
+                        for (final a in list)
+                          _card(
+                            selected: d.allergies.contains(a.name),
+                            onTap: () => toggle(a.name),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  a.icon,
+                                  color: d.allergies.contains(a.name)
+                                      ? _green
+                                      : Colors.grey,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  a.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                Text(
+                                  a.note,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: a.highAlert
+                                        ? _green
+                                        : Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _card(
+                      onTap: toggleNone,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle_outline),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text('No allergies or dietary restrictions'),
+                          ),
+                          Checkbox(
+                            value: d.noAllergies,
+                            onChanged: (_) => toggleNone(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (hasHighAlert) ...[
+                      const SizedBox(height: 12),
+                      _card(
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: Colors.deepOrange,
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Alert Mode: Strict Warning — scanning will flag any match with red alerts.',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            Text(
+                              'ACTIVE',
+                              style: TextStyle(
+                                color: _green,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            // Button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: _green),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => GoalPage(data: d)),
+                  ),
+                  child: const Text(
+                    'Complete Setup',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// body profile page
+import 'package:flutter/material.dart';
+
+import '../models.dart';
+import 'connect_doctor_page.dart';
+
+const _green = Color(0xFF138A3E);
+
+class BodyProfilePage extends StatefulWidget {
+  final OnboardingData data;
+  const BodyProfilePage({super.key, required this.data});
+  @override
+  State<BodyProfilePage> createState() => _BodyProfilePageState();
+}
+
+class _BodyProfilePageState extends State<BodyProfilePage> {
+  OnboardingData get d => widget.data;
+  bool useCm = true;
+  bool useKg = true;
+
+  static const lbsPerKg = 2.20462;
+
+  String get heightText {
+    if (useCm) return '${d.heightCm.round()} cm';
+    final totalIn = d.heightCm / 2.54;
+    return "${totalIn ~/ 12}' ${(totalIn % 12).round()}\"";
+  }
+
+  String get weightText => useKg
+      ? '${d.weightKg.toStringAsFixed(1)} kg'
+      : '${(d.weightKg * lbsPerKg).toStringAsFixed(1)} lbs';
+
+  void changeWeight(double delta) => setState(() {
+    final kgDelta = useKg ? delta : delta / lbsPerKg;
+    d.weightKg = (d.weightKg + kgDelta).clamp(20.0, 300.0);
+  });
+
+  Widget _card({
+    required Widget child,
+    bool selected = false,
+    VoidCallback? onTap,
+  }) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFFEAF8EE) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: selected ? _green : Colors.grey.shade300,
+          width: selected ? 1.5 : 1,
+        ),
+      ),
+      child: child,
+    ),
+  );
+
+  Widget _toggle(
+    List<String> options,
+    bool first,
+    ValueChanged<bool> onChanged,
+  ) => ToggleButtons(
+    isSelected: [first, !first],
+    onPressed: (i) => onChanged(i == 0),
+    constraints: const BoxConstraints(minHeight: 30, minWidth: 48),
+    borderRadius: BorderRadius.circular(8),
+    selectedColor: Colors.white,
+    fillColor: _green,
+    children: options
+        .map((o) => Text(o, style: const TextStyle(fontSize: 12)))
+        .toList(),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F6FD),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  Expanded(
+                    child: Row(
+                      children: List.generate(
+                        4,
+                        (i) => Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            decoration: BoxDecoration(
+                              color: i < 3 ? _green : Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('3 / 4', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "What's your body profile?",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'This helps NutriLens calculate your baseline calorie and metabolic needs.',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Sex
+                    const Text(
+                      'Biological Sex',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        for (final s in Sex.values)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: _card(
+                                selected: d.sex == s,
+                                onTap: () => setState(() => d.sex = s),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      switch (s) {
+                                        Sex.male => Icons.male,
+                                        Sex.female => Icons.female,
+                                        Sex.neutral => Icons.transgender,
+                                      },
+                                      color: d.sex == s ? _green : Colors.grey,
+                                    ),
+                                    Text(
+                                      s.name[0].toUpperCase() +
+                                          s.name.substring(1),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Height
+                    _card(
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'Height',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              _toggle(
+                                ['cm', 'ft/in'],
+                                useCm,
+                                (v) => setState(() => useCm = v),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            heightText,
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Slider(
+                            value: d.heightCm,
+                            min: 120,
+                            max: 220,
+                            activeColor: _green,
+                            onChanged: (v) => setState(() => d.heightCm = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Weight
+                    _card(
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  'Current Weight',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              _toggle(
+                                ['kg', 'lbs'],
+                                useKg,
+                                (v) => setState(() => useKg = v),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              IconButton.outlined(
+                                onPressed: () => changeWeight(-0.5),
+                                icon: const Icon(Icons.remove),
+                              ),
+                              Text(
+                                weightText,
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              IconButton.filled(
+                                style: IconButton.styleFrom(
+                                  backgroundColor: _green,
+                                ),
+                                onPressed: () => changeWeight(0.5),
+                                icon: const Icon(Icons.add),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              for (final delta in const [-2.0, -0.5, 0.5, 2.0])
+                                ActionChip(
+                                  label: Text(delta > 0 ? '+$delta' : '$delta'),
+                                  onPressed: () => changeWeight(delta),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Age
+                    _card(
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Age',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => setState(
+                              () => d.age = (d.age - 1).clamp(10, 100),
+                            ),
+                            icon: const Icon(Icons.remove_circle_outline),
+                          ),
+                          Text(
+                            '${d.age} yrs',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => setState(
+                              () => d.age = (d.age + 1).clamp(10, 100),
+                            ),
+                            icon: const Icon(Icons.add_circle_outline),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: _green),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => DoctorPage(data: d)),
+                  ),
+                  child: const Text('Continue', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// Connect doctor page
+
+import 'package:flutter/material.dart';
+
+import '../models.dart';
+import 'done_page.dart';
+
+const _green = Color(0xFF138A3E);
+
+class DoctorPage extends StatefulWidget {
+  final OnboardingData data;
+  const DoctorPage({super.key, required this.data});
+  @override
+  State<DoctorPage> createState() => _DoctorPageState();
+}
+
+class _DoctorPageState extends State<DoctorPage> {
+  final controller = TextEditingController();
+  Doctor? found;
+  bool loading = false;
+  bool notFound = false;
+
+  OnboardingData get d => widget.data;
+
+  Future<void> apply() async {
+    setState(() {
+      loading = true;
+      notFound = false;
+      found = null;
+    });
+    final doctor = await findClinic(controller.text);
+    if (!mounted) return;
+    setState(() {
+      loading = false;
+      found = doctor;
+      notFound = doctor == null;
+    });
+  }
+
+  void finish({bool solo = false}) {
+    d.doctor = solo ? null : found;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => DonePage(data: d)),
+      (_) => false,
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  Widget _card({
+    required Widget child,
+    bool selected = false,
+    VoidCallback? onTap,
+  }) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFFEAF8EE) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: selected ? _green : Colors.grey.shade300,
+          width: selected ? 1.5 : 1,
+        ),
+      ),
+      child: child,
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F6FD),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  Expanded(
+                    child: Row(
+                      children: List.generate(
+                        4,
+                        (i) => Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            decoration: BoxDecoration(
+                              color: _green,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('4 / 4', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Have a Doctor or Dietitian?',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Enter your specialist's clinic code to sync your meal scans and get customized targets.",
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Code input
+                    _card(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Clinic Connection Code',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: controller,
+                                  textCapitalization:
+                                      TextCapitalization.characters,
+                                  decoration: InputDecoration(
+                                    hintText: 'DOC-8849',
+                                    isDense: true,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: _green,
+                                ),
+                                onPressed: loading ? null : apply,
+                                child: loading
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text('Apply'),
+                              ),
+                            ],
+                          ),
+                          if (found != null)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.verified, color: _green, size: 16),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Verified Clinician Match found in Registry',
+                                    style: TextStyle(
+                                      color: _green,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (notFound)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: Text(
+                                'Code not found, please check and try again.',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Doctor card
+                    if (found != null) ...[
+                      const SizedBox(height: 12),
+                      _card(
+                        selected: true,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const CircleAvatar(
+                                  radius: 26,
+                                  child: Icon(Icons.person),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        found!.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      Text(
+                                        found!.org,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Chip(
+                                        label: Text(
+                                          found!.title,
+                                          style: const TextStyle(fontSize: 11),
+                                        ),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(),
+                            const Text(
+                              'Active sync protections enabled:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            for (final t in const [
+                              'Automatic meal scan sharing & AI confidence check',
+                              'Live allergen safety locks applied to your camera',
+                              'Real-time macro adjustments & doctor directives',
+                            ])
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.check_circle,
+                                      color: _green,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        t,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+                    const Center(
+                      child: Text('OR', style: TextStyle(color: Colors.grey)),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // QR
+                    _card(
+                      onTap: () {
+                        /* افتح الكاميرا لمسح الـ QR */
+                      },
+                      child: const Row(
+                        children: [
+                          Icon(Icons.qr_code_scanner),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Scan Doctor's QR Badge",
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                Text(
+                                  'Use camera for instant clinic badge pairing',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.chevron_right),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: _green),
+                  onPressed: found == null ? null : () => finish(),
+                  child: const Text(
+                    'Connect & Continue',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => finish(solo: true),
+              child: const Text("I'm doing this solo (Skip for now)"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// done page 
+
+import 'package:flutter/material.dart';
+
+import '../models.dart';
+
+/// شاشة بسيطة بتعرض اللي اتجمع - بدلها بالـ Home بتاعك
+class DonePage extends StatelessWidget {
+  final OnboardingData data;
+  const DonePage({super.key, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = {
+      'Allergies': data.noAllergies || data.allergies.isEmpty
+          ? 'None'
+          : data.allergies.join(', '),
+      'Goal': data.goal.title,
+      'Activity': data.activity.label,
+      'Sex': data.sex.name,
+      'Height': '${data.heightCm.round()} cm',
+      'Weight': '${data.weightKg.toStringAsFixed(1)} kg',
+      'Age': '${data.age}',
+      'Daily target': '${data.targetCalories} kcal',
+      'Doctor': data.doctor?.name ?? 'Solo',
+    };
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F6FD),
+      appBar: AppBar(
+        title: const Text('All set!'),
+        backgroundColor: const Color(0xFFF6F6FD),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          for (final e in rows.entries)
+            ListTile(title: Text(e.key), trailing: Text(e.value)),
+        ],
+      ),
+    );
+  }
+}
+
+
+// Goal page 
+
+import 'package:flutter/material.dart';
+
+import '../models.dart';
+import 'body_profile_page.dart';
+
+const _green = Color(0xFF138A3E);
+
+class GoalPage extends StatefulWidget {
+  final OnboardingData data;
+  const GoalPage({super.key, required this.data});
+  @override
+  State<GoalPage> createState() => _GoalPageState();
+}
+
+class _GoalPageState extends State<GoalPage> {
+  OnboardingData get d => widget.data;
+
+  Widget _card({
+    required Widget child,
+    bool selected = false,
+    VoidCallback? onTap,
+  }) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFFEAF8EE) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: selected ? _green : Colors.grey.shade300,
+          width: selected ? 1.5 : 1,
+        ),
+      ),
+      child: child,
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F6FD),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  Expanded(
+                    child: Row(
+                      children: List.generate(
+                        4,
+                        (i) => Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            decoration: BoxDecoration(
+                              color: i < 2 ? _green : Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('2 / 4', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "What's your main goal?",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "We'll personalize your daily calorie target around it.",
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 16),
+                    for (final g in goals)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _card(
+                          selected: d.goal == g,
+                          onTap: () => setState(() => d.goal = g),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: g.color.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(g.icon, color: g.color),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      g.title,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(
+                                      g.subtitle,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                d.goal == g
+                                    ? Icons.check_circle
+                                    : Icons.circle_outlined,
+                                color: d.goal == g ? _green : Colors.grey,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Activity level',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    SegmentedButton<ActivityLevel>(
+                      showSelectedIcon: false,
+                      segments: [
+                        for (final a in activityLevels)
+                          ButtonSegment(value: a, label: Text(a.label)),
+                      ],
+                      selected: {d.activity},
+                      onSelectionChanged: (s) =>
+                          setState(() => d.activity = s.first),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E2A3A),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Recommended daily target',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  '${d.targetCalories} kcal',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () =>
+                                setState(() => d.calorieAdjust -= 50),
+                            icon: const Icon(
+                              Icons.remove_circle,
+                              color: Colors.white54,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () =>
+                                setState(() => d.calorieAdjust += 50),
+                            icon: const Icon(
+                              Icons.add_circle,
+                              color: Colors.greenAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: _green),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => BodyProfilePage(data: d)),
+                  ),
+                  child: const Text('Continue', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// Login page
+
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool isPasswordHidden = true;
+
+  // ألوان التصميم المطابقة
+  static const Color primaryGreen = Color(0xFF03662A);
+  static const Color darkText = Color(0xFF131B2E);
+  static const Color subtitleText = Color(0xFF6B7280);
+  static const Color inputBorderColor = Color(0xFFE5E7EB);
+
+  @override
+  Widget build(BuildContext context) {
+    const double cardWidth = 340.0;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAF8FF),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 1. الشعار العلوي
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: primaryGreen,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF7FFC97),
+                      width: 4,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.center_focus_strong,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // 2. اسم التطبيق والـ Slogan
+                const Text(
+                  "FoodLens",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: darkText,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  "Scan, understand, thrive",
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: subtitleText,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // 3. نصوص الترحيب
+                const Text(
+                  "Welcome back",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
+                    color: darkText,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  "Log in to track your nutrition and daily goals",
+                  style: TextStyle(fontSize: 13, color: subtitleText),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+
+                // 4. الكارت الأبيض الرئيسي
+                Container(
+                  width: cardWidth,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFF0F0F5),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // حقل الـ Email
+                      const Text(
+                        "Email address",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: darkText,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.mail_outline,
+                            size: 20,
+                            color: subtitleText,
+                          ),
+                          hintText: "alex@example.com",
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // حقل الـ Password ومعه زر Forgot password
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Password",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: darkText,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              // إجراء استرجاع كلمة المرور
+                            },
+                            child: const Text(
+                              "Forgot password?",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: primaryGreen,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        obscureText: isPasswordHidden,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.lock_outline,
+                            size: 20,
+                            color: subtitleText,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              isPasswordHidden
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              size: 20,
+                              color: subtitleText,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                isPasswordHidden = !isPasswordHidden;
+                              });
+                            },
+                          ),
+                          hintText: "••••••••••••",
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+
+                      // زر Log in
+                      SizedBox(
+                        width: double.infinity,
+                        height: 46,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryGreen,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () {
+                            // إجراء تسجيل الدخول
+                          },
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Log in",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              SizedBox(width: 6),
+                              Icon(
+                                Icons.arrow_forward,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // فاصل OR CONTINUE WITH
+                      const Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              color: Color(0xFFE5E7EB),
+                              thickness: 1,
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              "OR CONTINUE WITH",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              color: Color(0xFFE5E7EB),
+                              thickness: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // زر Google
+                      SizedBox(
+                        width: double.infinity,
+                        height: 46,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () {
+                            // تسجيل الدخول بواسطة جوجل
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(
+                                'assets/google-icon.svg',
+                                height: 20,
+                                width: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                "Google",
+                                style: TextStyle(
+                                  color: darkText,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 5. زر Don't have an account? Sign up
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Don’t have an account? ",
+                      style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        // رجوع لصفحة SignUp أو الانتقال إليها
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        "Sign up",
+                        style: TextStyle(
+                          color: primaryGreen,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+//Sign up page
+
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import 'login.dart';
+import '../models.dart'; // تأكد إن مسار الـ models صح حسب فولدراتك
+import 'allergies_page.dart'; // مسار صفحة الـ Allergies اللي بعتها في السؤال الأول
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(debugShowCheckedModeBanner: false, home: SignUp());
+  }
+}
+
+class SignUp extends StatefulWidget {
+  const SignUp({super.key});
+
+  @override
+  State<SignUp> createState() => _SignUpState();
+}
+
+class _SignUpState extends State<SignUp> {
+  // حالة إظهار وإخفاء الباسورد
+  bool isPasswordHidden = true;
+
+  // الحالات الديناميكية للتحقق
+  bool hasMinLength = false;
+  bool hasNumberAndSymbol = false;
+  int strengthLevel = 0; // من 0 إلى 4
+
+  // ألوان التصميم
+  static const Color primaryGreen = Color(0xFF03662A);
+  static const Color lightGreenBadge = Color(0xFFC7F9D0);
+  static const Color darkText = Color(0xFF131B2E);
+  static const Color subtitleText = Color(0xFF6B7280);
+  static const Color inputBorderColor = Color(0xFFD1D5DB);
+  static const Color inactiveGrey = Color(0xFFE5E7EB);
+
+  // دالة فحص قوة الباسورد وتحديث الشروط ديناميكياً
+  void _checkPasswordStrength(String password) {
+    bool lengthValid = password.length >= 8;
+    bool hasNumber = RegExp(r'[0-9]').hasMatch(password);
+    bool hasSymbol = RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password);
+    bool hasLetters = RegExp(r'[a-zA-Z]').hasMatch(password);
+
+    int score = 0;
+    if (password.isNotEmpty) {
+      if (password.length >= 6) score++;
+      if (lengthValid) score++;
+      if (hasLetters && hasNumber) score++;
+      if (hasNumber && hasSymbol) score++;
+    }
+
+    setState(() {
+      hasMinLength = lengthValid;
+      hasNumberAndSymbol = hasNumber && hasSymbol;
+      strengthLevel = score;
+    });
+  }
+
+  // نص قوة الباسورد
+  String get strengthText {
+    if (strengthLevel == 0) return "";
+    switch (strengthLevel) {
+      case 1:
+        return "Weak";
+      case 2:
+        return "Fair";
+      case 3:
+        return "Good";
+      case 4:
+        return "Strong";
+      default:
+        return "";
+    }
+  }
+
+  // لون شريط ونصوص القوة
+  Color get strengthColor {
+    switch (strengthLevel) {
+      case 1:
+        return Colors.red;
+      case 2:
+        return Colors.orange;
+      case 3:
+        return Colors.lightGreen;
+      case 4:
+        return primaryGreen;
+      default:
+        return inactiveGrey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const double cardWidth = 340.0;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAF8FF),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 1. الشعار العلوي
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: primaryGreen,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF7FFC97),
+                      width: 4,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.center_focus_strong,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // 2. بادج Foodlens AI System
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: lightGreenBadge,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome, color: primaryGreen, size: 14),
+                      SizedBox(width: 6),
+                      Text(
+                        "Foodlens AI System",
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: primaryGreen,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // 3. العناوين
+                const Text(
+                  "Create Account",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
+                    color: darkText,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  "Start your personalized nutrition journey today",
+                  style: TextStyle(fontSize: 13, color: subtitleText),
+                ),
+                const SizedBox(height: 20),
+
+                // 4. الكارت الأبيض الرئيسي
+                Container(
+                  width: cardWidth,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFF0F0F5),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // حقل Full Name
+                      const Text(
+                        "Full Name",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: darkText,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.person_outline_rounded,
+                            size: 20,
+                            color: subtitleText,
+                          ),
+                          hintText: "Alex Johnson",
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // حقل Email address
+                      const Text(
+                        "Email address",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: darkText,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.mail_outline,
+                            size: 20,
+                            color: subtitleText,
+                          ),
+                          hintText: "alex@example.com",
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // حقل Password
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Password",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: darkText,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            strengthText,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: strengthColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        obscureText: isPasswordHidden,
+                        onChanged: _checkPasswordStrength,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: inputBorderColor,
+                            ),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.lock_outline,
+                            size: 20,
+                            color: subtitleText,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              isPasswordHidden
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              size: 20,
+                              color: subtitleText,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                isPasswordHidden = !isPasswordHidden;
+                              });
+                            },
+                          ),
+                          hintText: "NutriLover2024!",
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // أشرطة قوة الباسورد
+                      Row(
+                        children: List.generate(
+                          4,
+                          (index) => Expanded(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              height: 3.5,
+                              margin: EdgeInsets.only(
+                                right: index == 3 ? 0 : 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: index < strengthLevel
+                                    ? strengthColor
+                                    : inactiveGrey,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // شروط كلمة المرور التفاعلية
+                      Row(
+                        children: [
+                          Icon(
+                            hasMinLength
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            size: 14,
+                            color: hasMinLength ? primaryGreen : subtitleText,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "At least 8 characters",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: hasMinLength
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: hasMinLength ? darkText : subtitleText,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Icon(
+                            hasNumberAndSymbol
+                                ? Icons.check_circle
+                                : Icons.radio_button_unchecked,
+                            size: 14,
+                            color: hasNumberAndSymbol
+                                ? primaryGreen
+                                : subtitleText,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            "1 number & symbol",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: hasNumberAndSymbol
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: hasNumberAndSymbol
+                                  ? darkText
+                                  : subtitleText,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+
+                      // زر Create Account (تم ربطه بـ AllergiesPage وتمرير OnboardingData)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 46,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryGreen,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () {
+                            // إنشاء الـ OnboardingData الجديدة للبدء في الـ Flow
+                            final onboardingData = OnboardingData();
+
+                            // الانتقال لصفحة الـ AllergiesPage وتمرير الداتا
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    AllergiesPage(data: onboardingData),
+                              ),
+                            );
+                          },
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Create Account",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              SizedBox(width: 6),
+                              Icon(
+                                Icons.arrow_forward,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // فاصل OR SIGN UP WITH
+                      const Row(
+                        children: [
+                          Expanded(
+                            child: Divider(
+                              color: Color(0xFFE5E7EB),
+                              thickness: 1,
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Text(
+                              "OR SIGN UP WITH",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Divider(
+                              color: Color(0xFFE5E7EB),
+                              thickness: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // زر Google بالـ SVG
+                      SizedBox(
+                        width: double.infinity,
+                        height: 46,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          onPressed: () {},
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(
+                                '../../assets/google-icon.svg',
+                                height: 20,
+                                width: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                "Google",
+                                style: TextStyle(
+                                  color: darkText,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 5. زر Already have an account? Log in >
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Already have an account? ",
+                      style: TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+                    ),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
+                          ),
+                        );
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Log in",
+                            style: TextStyle(
+                              color: primaryGreen,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: primaryGreen,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// diary_page
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter/material.dart';
+
+import '../theme.dart';
+import '../widgets.dart';
+
+class DiaryScreen extends StatefulWidget {
+  const DiaryScreen({super.key});
+
+  @override
+  State<DiaryScreen> createState() => _DiaryScreenState();
+}
+
+class _DiaryScreenState extends State<DiaryScreen> {
+  int _range = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Diary', style: ts(22, w: FontWeight.w800)),
+              SegToggle(
+                items: const ['Week', 'Month'],
+                index: _range,
+                onChanged: (i) => setState(() => _range = i),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Daily average', style: ts(11, color: C.sub)),
+                    const Pill('↓ 6% vs last wk', bg: C.greenTint, fg: C.green),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text('1,742', style: ts(26, w: FontWeight.w800)),
+                    const SizedBox(width: 4),
+                    Text('kcal', style: ts(12, color: C.sub)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const WeekBarChart(
+                  values: [1500, 1800, 2000, 1500, 1700, 1950, 1744],
+                  height: 160,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          SectionHeader(
+            'Today',
+            trailing: Text('970 kcal', style: ts(11, color: C.sub)),
+          ),
+          const SizedBox(height: 10),
+          const MealTile(
+            icon: LucideIcons.leaf,
+            color: C.green,
+            tint: C.greenTint,
+            title: 'Grilled Salmon Salad',
+            subtitle: '12:40 PM · 320g',
+            kcal: 420,
+          ),
+          const SizedBox(height: 10),
+          const MealTile(
+            icon: LucideIcons.coffee,
+            color: C.orange,
+            tint: C.orangeTint,
+            title: 'Oatmeal with berries',
+            subtitle: '8:15 AM · 280g',
+            kcal: 340,
+          ),
+          const SizedBox(height: 18),
+          SectionHeader(
+            'Yesterday',
+            trailing: Text('1,890 kcal', style: ts(11, color: C.sub)),
+          ),
+          const SizedBox(height: 10),
+          const MealTile(
+            icon: LucideIcons.pizza,
+            color: C.red,
+            tint: C.redTint,
+            title: 'Margherita pizza',
+            subtitle: '7:30 PM · 260g',
+            kcal: 690,
+          ),
+          const SizedBox(height: 10),
+          const MealTile(
+            icon: LucideIcons.soup,
+            color: C.blue,
+            tint: C.blueTint,
+            title: 'Chicken rice bowl',
+            subtitle: '1:00 PM · 300g',
+            kcal: 560,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+//Food_search 
+import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../theme.dart';
+
+class FoodItem {
+  final String name;
+  final String portion;
+  final int kcal;
+  final IconData icon;
+  const FoodItem(this.name, this.portion, this.kcal, this.icon);
+}
+
+const _foods = <FoodItem>[
+  FoodItem('Grilled Salmon Salad', '320g', 420, LucideIcons.leaf),
+  FoodItem('Oatmeal with berries', '280g', 340, LucideIcons.croissant),
+  FoodItem('Apple & almonds', '150g', 210, LucideIcons.apple),
+  FoodItem('Margherita pizza', '260g', 690, LucideIcons.pizza),
+  FoodItem('Chicken rice bowl', '300g', 560, LucideIcons.soup),
+  FoodItem('Greek yogurt', '170g', 130, LucideIcons.cupSoda),
+  FoodItem('Scrambled eggs', '120g', 220, LucideIcons.egg),
+  FoodItem('Avocado toast', '160g', 310, LucideIcons.sandwich),
+  FoodItem('Caesar salad', '250g', 360, LucideIcons.salad),
+  FoodItem('Beef burger', '230g', 640, LucideIcons.beef),
+  FoodItem('Banana', '118g', 105, LucideIcons.banana),
+  FoodItem('Mixed nuts', '30g', 180, LucideIcons.nut),
+  FoodItem('Whole wheat pasta', '240g', 420, LucideIcons.wheat),
+  FoodItem('Lentil soup', '300g', 230, LucideIcons.soup),
+  FoodItem('Protein shake', '330ml', 160, LucideIcons.cupSoda),
+  FoodItem('Chocolate cookie', '40g', 190, LucideIcons.cookie),
+];
+
+class FoodSearchSheet extends StatefulWidget {
+  const FoodSearchSheet({super.key});
+
+  @override
+  State<FoodSearchSheet> createState() => _FoodSearchSheetState();
+}
+
+class _FoodSearchSheetState extends State<FoodSearchSheet> {
+  String _q = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final results = _foods
+        .where((f) => f.name.toLowerCase().contains(_q.trim().toLowerCase()))
+        .toList();
+    final kb = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: kb),
+      child: Container(
+        height: MediaQuery.sizeOf(context).height * .8,
+        decoration: const BoxDecoration(
+          color: C.bg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: C.track,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Search food',
+                      style: ts(18, w: FontWeight.w800),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: const Icon(LucideIcons.x, size: 22, color: C.sub),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                autofocus: true,
+                onChanged: (v) => setState(() => _q = v),
+                style: ts(14),
+                cursorColor: C.green,
+                decoration: InputDecoration(
+                  hintText: 'Search meals, ingredients...',
+                  hintStyle: ts(13, color: C.sub),
+                  prefixIcon: const Icon(
+                    LucideIcons.search,
+                    size: 18,
+                    color: C.sub,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: C.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: C.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: C.green, width: 1.5),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: results.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No results for "$_q"',
+                        style: ts(13, color: C.sub),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      itemCount: results.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (_, i) {
+                        final f = results[i];
+                        return GestureDetector(
+                          onTap: () => Navigator.of(context).pop(f),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: C.border),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: C.greenTint,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(f.icon, size: 20, color: C.green),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        f.name,
+                                        style: ts(13, w: FontWeight.w700),
+                                      ),
+                                      Text(
+                                        f.portion,
+                                        style: ts(11, color: C.sub),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '${f.kcal}',
+                                  style: ts(15, w: FontWeight.w800),
+                                ),
+                                const SizedBox(width: 3),
+                                Text('kcal', style: ts(10, color: C.sub)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+//home page
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter/material.dart';
+
+import '../theme.dart';
+import '../widgets.dart';
+
+class HomeScreen extends StatefulWidget {
+  final VoidCallback onSeeAll;
+  final VoidCallback onScan;
+  const HomeScreen({super.key, required this.onSeeAll, required this.onScan});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _day = 2;
+  static const _days = [
+    ('Mon', 12),
+    ('Tue', 13),
+    ('Wed', 14),
+    ('Thu', 15),
+    ('Fri', 16),
+    ('Sat', 17),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        children: [
+          Row(
+            children: [
+              const Avatar(size: 44),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Good morning', style: ts(12, color: C.sub)),
+                  Text('Alex', style: ts(17, w: FontWeight.w800)),
+                ],
+              ),
+              const Spacer(),
+              const NotifBell(),
+            ],
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            child: Row(
+              children: [
+                for (int i = 0; i < _days.length; i++)
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _day = i),
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: i == _day ? C.green : Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              _days[i].$1,
+                              style: ts(
+                                11,
+                                w: FontWeight.w600,
+                                color: i == _day ? Colors.white : C.sub,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_days[i].$2}',
+                              style: ts(
+                                14,
+                                w: FontWeight.w800,
+                                color: i == _day ? Colors.white : C.text,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 124,
+                      height: 124,
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: 1240 / 1850),
+                        duration: const Duration(milliseconds: 1000),
+                        curve: Curves.easeOutCubic,
+                        builder: (_, v, __) => CustomPaint(
+                          painter: RingPainter(v),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '1,240',
+                                  style: ts(24, w: FontWeight.w800),
+                                ),
+                                Text(
+                                  'of 1,850 kcal',
+                                  style: ts(10, color: C.sub),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _stat(
+                            LucideIcons.flag,
+                            C.green,
+                            C.greenTint,
+                            'Remaining',
+                            '610',
+                          ),
+                          const SizedBox(height: 14),
+                          _stat(
+                            LucideIcons.flame,
+                            C.orange,
+                            C.orangeTint,
+                            'Burned',
+                            '320',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: _macro('Protein', 84, 120, C.green)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _macro('Carbs', 130, 210, C.orange)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _macro('Fats', 41, 60, C.blue)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          SectionHeader(
+            "Today's meals",
+            trailing: GestureDetector(
+              onTap: widget.onSeeAll,
+              child: Text(
+                'See all',
+                style: ts(12, w: FontWeight.w700, color: C.green),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const MealTile(
+            icon: LucideIcons.croissant,
+            color: C.orange,
+            tint: C.orangeTint,
+            title: 'Oatmeal with berries',
+            subtitle: 'Breakfast • 8:15 AM • 280g',
+            kcal: 340,
+          ),
+          const SizedBox(height: 10),
+          const MealTile(
+            icon: LucideIcons.leaf,
+            color: C.green,
+            tint: C.greenTint,
+            title: 'Grilled Salmon Salad',
+            subtitle: 'Lunch • 12:40 PM • 320g',
+            kcal: 420,
+          ),
+          const SizedBox(height: 10),
+          const MealTile(
+            icon: LucideIcons.apple,
+            color: C.blue,
+            tint: C.blueTint,
+            title: 'Apple & almonds',
+            subtitle: 'Snack • 3:30 PM • 150g',
+            kcal: 210,
+          ),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: widget.onScan,
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: C.greenTint,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: C.green.withOpacity(.15)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(
+                      color: C.green,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.sparkles,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Smart Meal Logging',
+                          style: ts(12, w: FontWeight.w800),
+                        ),
+                        Text(
+                          'Snap a photo to auto-log your next dinner',
+                          style: ts(10.5, color: C.sub),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    'Try Scan',
+                    style: ts(11, w: FontWeight.w800, color: C.green),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(LucideIcons.camera, size: 14, color: C.green),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stat(
+    IconData icon,
+    Color c,
+    Color tint,
+    String label,
+    String value,
+  ) => Row(
+    children: [
+      IconBox(icon, color: c, tint: tint, size: 30, radius: 8),
+      const SizedBox(width: 10),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: ts(11, color: C.sub)),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(value, style: ts(18, w: FontWeight.w800)),
+              const SizedBox(width: 3),
+              Text('kcal', style: ts(10, color: C.sub)),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+
+  Widget _macro(String label, int cur, int goal, Color c) => Column(
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: ts(10.5, w: FontWeight.w700)),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$cur',
+                  style: ts(10.5, w: FontWeight.w800, color: c),
+                ),
+                TextSpan(
+                  text: '/${goal}g',
+                  style: ts(10, color: C.sub),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 6),
+      ProgressBar(value: cur / goal, color: c),
+    ],
+  );
+}
+
+
+//profile_page
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter/material.dart';
+
+import '../theme.dart';
+import '../widgets.dart';
+
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _reminders = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Profile', style: ts(22, w: FontWeight.w800)),
+              const Icon(LucideIcons.settings, color: C.sub, size: 22),
+            ],
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: C.green, width: 2),
+                      ),
+                      child: const Avatar(size: 80),
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 2,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: C.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          LucideIcons.camera,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text('Alex Johnson', style: ts(18, w: FontWeight.w800)),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    _metric('Age', '28', 'yrs'),
+                    _metric('Height', '178', 'cm'),
+                    _metric('Weight', '74.5', 'kg'),
+                    _metric('BMI', '23.5', 'Healthy', green: true),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    const IconBox(
+                      LucideIcons.flame,
+                      color: C.orange,
+                      tint: C.orangeTint,
+                      size: 36,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Nutrition Targets',
+                        style: ts(14, w: FontWeight.w800),
+                      ),
+                    ),
+                    const Icon(LucideIcons.pencil, size: 18, color: C.green),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: C.lavender,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Daily Calorie Target',
+                        style: ts(12, w: FontWeight.w600, color: C.sub),
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '1,850',
+                            style: ts(22, w: FontWeight.w800, color: C.green),
+                          ),
+                          const SizedBox(width: 4),
+                          Text('kcal / day', style: ts(10, color: C.sub)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Macro Distribution', style: ts(11, color: C.sub)),
+                    Text(
+                      '100% Calibrated',
+                      style: ts(11, w: FontWeight.w800, color: C.green),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: SizedBox(
+                    height: 8,
+                    child: Row(
+                      children: [
+                        Expanded(flex: 30, child: Container(color: C.green)),
+                        Expanded(flex: 45, child: Container(color: C.orange)),
+                        Expanded(flex: 25, child: Container(color: C.blue)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _legend(C.green, '30% Protein', '139g target'),
+                    _legend(C.orange, '45% Carbs', '208g target'),
+                    _legend(C.blue, '25% Fats', '51g target'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    const IconBox(
+                      LucideIcons.shieldAlert,
+                      color: C.red,
+                      tint: C.redTint,
+                      size: 36,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Allergen Guard',
+                        style: ts(14, w: FontWeight.w800),
+                      ),
+                    ),
+                    Text(
+                      'Manage',
+                      style: ts(12, w: FontWeight.w700, color: C.green),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: C.redTint,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: C.red.withOpacity(.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        LucideIcons.triangleAlert,
+                        color: C.red,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Peanuts & Tree Nuts',
+                              style: ts(12, w: FontWeight.w800, color: C.red),
+                            ),
+                            Text(
+                              'Strict Scan Alert Active',
+                              style: ts(10, color: C.red.withOpacity(.8)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Pill('Lethal', bg: C.red, fg: Colors.white),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.circleCheck,
+                      color: C.green,
+                      size: 15,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'AI Food Scanner alerts automatically in viewfinder',
+                        style: ts(10.5, color: C.sub),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Connected Devices & AI',
+                  style: ts(14, w: FontWeight.w800),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const IconBox(
+                      LucideIcons.heartPulse,
+                      color: C.blue,
+                      tint: C.blueTint,
+                      size: 34,
+                      radius: 17,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Apple Health',
+                            style: ts(12, w: FontWeight.w800),
+                          ),
+                          Text(
+                            'Bi-directional calorie & burn sync',
+                            style: ts(10, color: C.sub),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Pill('Connected', bg: C.greenTint, fg: C.green),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const IconBox(
+                      LucideIcons.focus,
+                      color: C.blue,
+                      tint: C.blueTint,
+                      size: 34,
+                      radius: 17,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'AI Scanner HUD',
+                            style: ts(12, w: FontWeight.w800),
+                          ),
+                          Text(
+                            'Ultra-precise neural reticle',
+                            style: ts(10, color: C.sub),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text('Calibrated', style: ts(10, color: C.sub)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Preferences & Account',
+                  style: ts(14, w: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                _row(
+                  LucideIcons.utensils,
+                  'Dietary Focus',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('High Protein', style: ts(11, color: C.sub)),
+                      const Icon(
+                        LucideIcons.chevronRight,
+                        size: 18,
+                        color: C.sub,
+                      ),
+                    ],
+                  ),
+                ),
+                _row(
+                  LucideIcons.bell,
+                  'Meal Reminders',
+                  trailing: Switch(
+                    value: _reminders,
+                    activeColor: Colors.white,
+                    activeTrackColor: C.green,
+                    onChanged: (v) => setState(() => _reminders = v),
+                  ),
+                ),
+                _row(
+                  LucideIcons.shield,
+                  'Privacy & HIPAA Data',
+                  trailing: const Icon(
+                    LucideIcons.chevronRight,
+                    size: 18,
+                    color: C.sub,
+                  ),
+                ),
+                _row(LucideIcons.logOut, 'Log Out', color: C.red),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _metric(String label, String v, String unit, {bool green = false}) =>
+      Expanded(
+        child: Column(
+          children: [
+            Text(label, style: ts(10.5, color: C.sub)),
+            const SizedBox(height: 2),
+            Text(v, style: ts(17, w: FontWeight.w800)),
+            Text(
+              unit,
+              style: ts(
+                10,
+                w: green ? FontWeight.w800 : FontWeight.w500,
+                color: green ? C.green : C.sub,
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _legend(Color c, String a, String b) => Expanded(
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(a, style: ts(10, w: FontWeight.w800)),
+            Text(b, style: ts(9, color: C.sub)),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  Widget _row(
+    IconData icon,
+    String label, {
+    Widget? trailing,
+    Color color = C.text,
+  }) => SizedBox(
+    height: 46,
+    child: Row(
+      children: [
+        Icon(icon, size: 19, color: color == C.red ? C.red : C.sub),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: ts(12.5, w: FontWeight.w600, color: color),
+          ),
+        ),
+        if (trailing != null) trailing,
+      ],
+    ),
+  );
+}
+
+
+//Stats_page
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter/material.dart';
+
+import '../theme.dart';
+import '../widgets.dart';
+
+class StatsScreen extends StatefulWidget {
+  const StatsScreen({super.key});
+
+  @override
+  State<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends State<StatsScreen> {
+  int _range = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        children: [
+          Row(
+            children: [
+              const Avatar(size: 36),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Analytics Hub', style: ts(10.5, color: C.sub)),
+                  Text('Alex', style: ts(16, w: FontWeight.w800)),
+                ],
+              ),
+              const Spacer(),
+              const NotifBell(),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Statistics', style: ts(22, w: FontWeight.w800)),
+              SegToggle(
+                items: const ['Week', 'Month', 'Year'],
+                index: _range,
+                onChanged: (i) => setState(() => _range = i),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: C.greenTint,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: C.green.withOpacity(.25)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      LucideIcons.circleCheck,
+                      size: 14,
+                      color: C.green,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Weekly Nutrition Score: 92/100',
+                      style: ts(11, w: FontWeight.w700, color: C.green),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'On Track',
+                style: ts(11, w: FontWeight.w800, color: C.green),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Daily average', style: ts(11, color: C.sub)),
+                    const Pill('↘ 6% vs last wk', bg: C.greenTint, fg: C.green),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('1,742', style: ts(26, w: FontWeight.w800)),
+                    const SizedBox(width: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text('kcal', style: ts(12, color: C.sub)),
+                    ),
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Target baseline: 1,850 kcal',
+                          style: ts(10, color: C.sub),
+                        ),
+                        Text(
+                          'Deficit: -108 kcal/day',
+                          style: ts(10.5, w: FontWeight.w800, color: C.green),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const WeekBarChart(
+                  values: [1500, 1800, 2000, 1500, 1700, 1950, 1744],
+                  height: 150,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Macronutrient Balance',
+                      style: ts(14, w: FontWeight.w800),
+                    ),
+                    Text('Avg / Day', style: ts(10, color: C.sub)),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                _macro('Protein', C.green, 118, 120, 98),
+                const SizedBox(height: 12),
+                _macro('Carbohydrates', C.orange, 185, 210, 88),
+                const SizedBox(height: 12),
+                _macro('Fats', C.blue, 48, 60, 80),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.only(top: 12),
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: C.border)),
+                  ),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        _ratio('32% P'),
+                        const VerticalDivider(width: 1, color: C.border),
+                        _ratio('46% C'),
+                        const VerticalDivider(width: 1, color: C.border),
+                        _ratio('22% F'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Weight Journey', style: ts(14, w: FontWeight.w800)),
+                    const Pill('-1.5 kg', bg: C.greenTint, fg: C.green),
+                  ],
+                ),
+                Text('Past 4 weeks trend', style: ts(10.5, color: C.sub)),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: C.lavender,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      _weightBox('Start', '76.0', false),
+                      _weightBox('Current', '74.5', true),
+                      _weightBox('Target', '72.0', false),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _week('Week 1', '(76.0)', false),
+                    _week('Week 2', '(75.4)', false),
+                    _week('Week 3', '(74.9)', false),
+                    _week('Week 4', '(74.5)', true),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: .375),
+                  duration: const Duration(milliseconds: 900),
+                  curve: Curves.easeOutCubic,
+                  builder: (_, v, __) => LayoutBuilder(
+                    builder: (_, c) => SizedBox(
+                      height: 14,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.centerLeft,
+                        children: [
+                          ProgressBar(value: v, color: C.green, height: 6),
+                          Positioned(
+                            left: (c.maxWidth - 14) * v,
+                            child: Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: C.green, width: 3),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '37.5% of total 4.0 kg goal achieved',
+                      style: ts(10, color: C.sub),
+                    ),
+                    Text(
+                      '2.5 kg remaining',
+                      style: ts(10, w: FontWeight.w800, color: C.green),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Row(
+              children: [
+                const IconBox(
+                  LucideIcons.shieldCheck,
+                  color: C.green,
+                  tint: C.greenTint,
+                  size: 42,
+                  radius: 21,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Allergen Guard', style: ts(13, w: FontWeight.w800)),
+                      Text(
+                        '0 allergen exposures flagged this week',
+                        style: ts(10.5, color: C.sub),
+                      ),
+                      Text(
+                        'Peanuts & Tree Nuts protected',
+                        style: ts(10, w: FontWeight.w800, color: C.green),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(LucideIcons.circleCheck, color: C.green, size: 22),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _macro(String label, Color c, int cur, int goal, int pct) => Column(
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              Text(label, style: ts(12, w: FontWeight.w700)),
+            ],
+          ),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '${cur}g',
+                  style: ts(11.5, w: FontWeight.w800),
+                ),
+                TextSpan(
+                  text: ' / ${goal}g target ($pct%)',
+                  style: ts(10.5, color: C.sub),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 6),
+      ProgressBar(value: pct / 100, color: c, height: 8),
+    ],
+  );
+
+  Widget _ratio(String v) => Expanded(
+    child: Column(
+      children: [
+        Text('Ratio', style: ts(10, color: C.sub)),
+        const SizedBox(height: 2),
+        Text(v, style: ts(13, w: FontWeight.w800)),
+      ],
+    ),
+  );
+
+  Widget _weightBox(String label, String v, bool hi) => Expanded(
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: hi ? Colors.white : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        border: hi ? Border.all(color: C.green.withOpacity(.2)) : null,
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: ts(
+              10,
+              w: hi ? FontWeight.w800 : FontWeight.w500,
+              color: hi ? C.green : C.sub,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(v, style: ts(17, w: FontWeight.w800)),
+              const SizedBox(width: 2),
+              Text('kg', style: ts(10, color: C.sub)),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _week(String w, String v, bool hi) => Column(
+    children: [
+      Text(
+        w,
+        style: ts(
+          10,
+          w: hi ? FontWeight.w800 : FontWeight.w500,
+          color: hi ? C.green : C.sub,
+        ),
+      ),
+      Text(
+        v,
+        style: ts(
+          10,
+          w: hi ? FontWeight.w800 : FontWeight.w500,
+          color: hi ? C.green : C.sub,
+        ),
+      ),
+    ],
+  );
+}
+
+
+//Scanner
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'dart:io';
+
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../theme.dart';
+import 'food_search.dart';
+
+class ScannerScreen extends StatefulWidget {
+  const ScannerScreen({super.key});
+
+  @override
+  State<ScannerScreen> createState() => _ScannerScreenState();
+}
+
+class _ScannerScreenState extends State<ScannerScreen>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+  CameraController? _cam;
+  String? _error;
+  bool _flash = false;
+  int _mode = 0;
+  XFile? _picked;
+
+  late final AnimationController _scan = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1800),
+  )..repeat(reverse: true);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      final cams = await availableCameras();
+      if (cams.isEmpty) {
+        if (mounted) setState(() => _error = 'No camera found on this device');
+        return;
+      }
+      final back = cams.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cams.first,
+      );
+      final ctrl = CameraController(
+        back,
+        ResolutionPreset.high,
+        enableAudio: false,
+      );
+      await ctrl.initialize();
+      if (!mounted) {
+        await ctrl.dispose();
+        return;
+      }
+      setState(() {
+        _cam = ctrl;
+        _error = null;
+      });
+    } on CameraException catch (e) {
+      if (!mounted) return;
+      setState(
+        () => _error = e.code.contains('Denied')
+            ? 'Camera permission denied.\nEnable it from system settings.'
+            : (e.description ?? 'Camera error'),
+      );
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final c = _cam;
+    if (c == null || !c.value.isInitialized) return;
+    if (state == AppLifecycleState.inactive) {
+      setState(() => _cam = null);
+      c.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      _initCamera();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _scan.dispose();
+    _cam?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggleFlash() async {
+    final c = _cam;
+    if (c == null || !c.value.isInitialized) return;
+    _flash = !_flash;
+    await c.setFlashMode(_flash ? FlashMode.torch : FlashMode.off);
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _capture() async {
+    final picked = _picked;
+    if (picked != null) {
+      _onImage(picked.path);
+      return;
+    }
+    final c = _cam;
+    if (c == null || !c.value.isInitialized || c.value.isTakingPicture) return;
+    HapticFeedback.mediumImpact();
+    final file = await c.takePicture();
+    if (!mounted) return;
+    _onImage(file.path);
+  }
+
+  void _onImage(String path) {
+    // TODO: send `path` to your AI analysis pipeline.
+    _snack('Image ready for analysis');
+  }
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+      );
+  }
+
+  Future<void> _pickFromGallery() async {
+    try {
+      final f = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 90,
+      );
+      if (f != null && mounted) setState(() => _picked = f);
+    } catch (_) {
+      if (mounted) _snack('Could not open the gallery');
+    }
+  }
+
+  Future<void> _openSearch() async {
+    final food = await showModalBottomSheet<FoodItem>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const FoodSearchSheet(),
+    );
+    if (food != null && mounted)
+      _snack('${food.name} · ${food.kcal} kcal added');
+  }
+
+  Widget _preview() {
+    final picked = _picked;
+    if (picked != null) {
+      return Image.file(
+        File(picked.path),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
+    }
+    final c = _cam;
+    if (c == null || !c.value.isInitialized) {
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0F1B2D), Color(0xFF1C2B3C)],
+          ),
+        ),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(40),
+        child: _error == null
+            ? const SizedBox.shrink()
+            : Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: ts(12, color: Colors.white70),
+              ),
+      );
+    }
+    final s = c.value.previewSize!;
+    return ClipRect(
+      child: SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: s.height,
+            height: s.width,
+            child: CameraPreview(c),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    final frameW = w * 0.68;
+    final frameH = frameW * 0.72;
+    const modes = ['ANALYZE', 'PORTION', 'MENU'];
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            _preview(),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(.55),
+                    Colors.black.withOpacity(.15),
+                    Colors.black.withOpacity(.25),
+                    Colors.black.withOpacity(.7),
+                  ],
+                  stops: const [0, .3, .6, 1],
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Row(
+                      children: [
+                        _circleBtn(
+                          LucideIcons.x,
+                          () => Navigator.of(context).maybePop(),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(.45),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(.12),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF22E066),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 7),
+                              Text(
+                                'AI LENS ACTIVE',
+                                style: ts(
+                                  9.5,
+                                  w: FontWeight.w800,
+                                  color: Colors.white,
+                                  ls: .8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        _circleBtn(
+                          _flash ? LucideIcons.zap : LucideIcons.zapOff,
+                          _toggleFlash,
+                          active: _flash,
+                        ),
+                        const SizedBox(width: 8),
+                        _circleBtn(LucideIcons.settings, () {}),
+                      ],
+                    ),
+                  ),
+                  const Spacer(flex: 3),
+                  SizedBox(
+                    width: frameW,
+                    height: frameH,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CustomPaint(
+                          size: Size(frameW, frameH),
+                          painter: _BracketPainter(),
+                        ),
+                        AnimatedBuilder(
+                          animation: _scan,
+                          builder: (_, __) => Positioned(
+                            top:
+                                14 +
+                                (frameH - 28) *
+                                    Curves.easeInOut.transform(_scan.value),
+                            left: 14,
+                            right: 14,
+                            child: Container(
+                              height: 2,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    const Color(0xFF22E066).withOpacity(.9),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF22E066)
+                                        .withOpacity(.5),
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(.55),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF22E066),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'DETECTING...',
+                                style: ts(
+                                  9.5,
+                                  w: FontWeight.w800,
+                                  color: const Color(0xFF22E066),
+                                  ls: .8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'Point your camera at the food to analyze',
+                    textAlign: TextAlign.center,
+                    style: ts(13, w: FontWeight.w700, color: Colors.white),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Auto-recognizing ingredients & portion scale',
+                    textAlign: TextAlign.center,
+                    style: ts(10.5, color: Colors.white70),
+                  ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: _picked == null
+                        ? const SizedBox(height: 34)
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: GestureDetector(
+                              onTap: () => setState(() => _picked = null),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(.55),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(.15),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      LucideIcons.x,
+                                      size: 13,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Back to camera',
+                                      style: ts(
+                                        10.5,
+                                        w: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                  ),
+                  const Spacer(flex: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _circleBtn(
+                          LucideIcons.image,
+                          _pickFromGallery,
+                          size: 46,
+                        ),
+                        GestureDetector(
+                          onTap: _capture,
+                          child: Container(
+                            width: 78,
+                            height: 78,
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(.35),
+                                width: 2,
+                              ),
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: C.green,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: C.green.withOpacity(.5),
+                                    blurRadius: 18,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                LucideIcons.utensils,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                        ),
+                        _circleBtn(LucideIcons.search, _openSearch, size: 46),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(.45),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: Colors.white.withOpacity(.1)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (int i = 0; i < modes.length; i++)
+                          GestureDetector(
+                            onTap: () => setState(() => _mode = i),
+                            behavior: HitTestBehavior.opaque,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: i == _mode
+                                    ? Colors.white.withOpacity(.12)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: Text(
+                                modes[i],
+                                style: ts(
+                                  10,
+                                  w: FontWeight.w800,
+                                  ls: .8,
+                                  color: i == _mode
+                                      ? const Color(0xFF22E066)
+                                      : Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _circleBtn(
+    IconData icon,
+    VoidCallback onTap, {
+    double size = 38,
+    bool active = false,
+  }) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(.45),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withOpacity(.12)),
+      ),
+      child: Icon(
+        icon,
+        color: active ? const Color(0xFF22E066) : Colors.white,
+        size: size * .5,
+      ),
+    ),
+  );
+}
+
+class _BracketPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = const Color(0xFF22E066)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    const len = 26.0;
+    const r = 14.0;
+    final w = size.width, h = size.height;
+    final path = Path()
+      ..moveTo(0, len)
+      ..lineTo(0, r)
+      ..quadraticBezierTo(0, 0, r, 0)
+      ..lineTo(len, 0)
+      ..moveTo(w - len, 0)
+      ..lineTo(w - r, 0)
+      ..quadraticBezierTo(w, 0, w, r)
+      ..lineTo(w, len)
+      ..moveTo(w, h - len)
+      ..lineTo(w, h - r)
+      ..quadraticBezierTo(w, h, w - r, h)
+      ..lineTo(w - len, h)
+      ..moveTo(len, h)
+      ..lineTo(r, h)
+      ..quadraticBezierTo(0, h, 0, h - r)
+      ..lineTo(0, h - len);
+    canvas.drawPath(path, p);
+  }
+
+  @override
+  bool shouldRepaint(_) => false;
+}

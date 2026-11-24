@@ -1,0 +1,50 @@
+{
+  "userProfile": {
+    "allergies": ["Peanuts", "Tree Nuts", "Peanut Oil"],
+    "profileNote": "Severe Peanut & Tree Nut Sensitivity"
+  },
+  "scanResults": [
+    {
+      "id": "thai_noodle_01",
+      "dishName": "Thai Noodle Dish",
+      "mealName": "Spicy Peanut Noodle Bowl",
+      "mealType": "Asian Fusion • Main Course",
+      "imageAsset": "assets/images/thai_noodle.png",
+      "matchPercent": 98.4,
+      "accuracy": 96,
+      "portionGrams": 360,
+      "calories": 580,
+      "proteinG": 22,
+      "carbsG": 64,
+      "fatsG": 28,
+      "ingredients": [
+        "Crushed Peanuts (25g)",
+        "Peanut Oil",
+        "Rice Noodles",
+        "Bean Sprouts"
+      ],
+      "insight": "Contains peanut-based ingredients that may trigger an allergic reaction."
+    },
+    {
+      "id": "salmon_salad_01",
+      "dishName": "Grilled Salmon Salad",
+      "mealName": "Grilled Salmon Salad",
+      "mealType": "High Protein • Salad",
+      "imageAsset": "assets/images/grilled_salmon_salad.png",
+      "matchPercent": 92.0,
+      "accuracy": 94,
+      "portionGrams": 320,
+      "calories": 420,
+      "proteinG": 35,
+      "carbsG": 12,
+      "fatsG": 38,
+      "ingredients": [
+        "Grilled Salmon",
+        "Mixed Greens",
+        "Olive Oil",
+        "Cherry Tomatoes"
+      ],
+      "insight": "This meal is high in protein and healthy fats. Great for muscle recovery and heart health."
+    }
+  ]
+}

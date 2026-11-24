@@ -1,0 +1,67 @@
+{
+  "users": [
+    {
+      "id": "admin-001",
+      "fullName": "System Admin",
+      "email": "admin@foodlens.com",
+      "password": "Admin123!",
+      "role": "admin",
+      "accountStatus": "active"
+    },
+    {
+      "id": "admin-002",
+      "fullName": "Mahmoud Mohamed",
+      "email": "mahmoud@foodlens.com",
+      "password": "mahmoud1234!",
+      "role": "admin",
+      "accountStatus": "active"
+    },
+    {
+      "id": "doc-001",
+      "fullName": "Dr. David Vance, MS, RD",
+      "email": "doctor@foodlens.com",
+      "password": "Doctor123!",
+      "role": "doctor",
+      "approvalStatus": "approved",
+      "accountStatus": "active",
+      "clinicCode": "DOC-8849",
+      "org": "Metropolitan Clinical Nutrition & Allergy Center",
+      "specialty": "Clinical Dietetics & Metabolism",
+      "licenseNumber": "LIC-8849-RD",
+      "title": "Verified Dietitian"
+    },
+    {
+      "id": "doc-002",
+      "fullName": "Dr. David Chen, MD",
+      "email": "pending.doc@foodlens.com",
+      "password": "Doctor123!",
+      "role": "doctor",
+      "approvalStatus": "pending",
+      "accountStatus": "active",
+      "clinicCode": null,
+      "org": "Metropolitan Clinical Center",
+      "specialty": "Clinical Nutritionist & Allergist",
+      "licenseNumber": "EGY-MED-2024-88"
+    },
+    {
+      "id": "user-001",
+      "fullName": "Alex Johnson",
+      "email": "alex@example.com",
+      "password": "NutriLover2024!",
+      "role": "user",
+      "accountStatus": "active",
+      "allergies": ["Peanuts", "Tree Nuts"],
+      "noAllergies": false,
+      "goalTitle": "Lose weight",
+      "activityLabel": "Moderate",
+      "calorieAdjust": 0,
+      "sex": "male",
+      "heightCm": 178.0,
+      "weightKg": 74.5,
+      "age": 28,
+      "targetCalories": 1850,
+      "doctorCode": "DOC-8849",
+      "doctorName": "Dr. David Vance, MS, RD"
+    }
+  ]
+}
